@@ -14,7 +14,7 @@ class TimeRange:
 
 class OdeSolver(ABC):
     """
-    Abstract base class for solving IVPs of the form dy/dt = f(t, f)
+    Abstract base class for solving IVPs of the form dy/dt = f(t, y)
     """
 
     def __init__(
@@ -29,21 +29,21 @@ class OdeSolver(ABC):
         Parameters:
         - f: The function f(t, y)
         - time_range: The time range (start_time, end_time)
-        - y0: The initial conditions (can be a scalar or array for systems)
+        - y0: The initial conditions
         """
 
         self.f = f
         self.time_range = time_range
-        self.y0 = np.asarray(y0, dtype=float)
+        self.y0 = np.atleast_1d(y0)
 
     @abstractmethod
     def step(self, t: float, y: np.ndarray, dt: float) -> np.ndarray:
         """
-        Calculates next value of f, must be implemented by child classes"""
+        Calculates next value of y, must be implemented by child classes"""
 
         pass
 
-    def solve(self, dt: float):
+    def solve(self, dt: float) -> tuple[np.ndarray, np.ndarray]:
         """
         Time step implementation
         """
