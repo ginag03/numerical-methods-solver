@@ -1,6 +1,6 @@
 import numpy as np
 import plotly.graph_objects as go
-from solvers import TimeRange, SimpleEuler
+from solvers import TimeRange, SimpleEuler, RK4
 
 def main():
     # Define the test ODE system and parameters.
@@ -14,9 +14,13 @@ def main():
     t_range = TimeRange(start=0.0, end=5.0)
     dt = 0.5
 
-    # initialise and run the solver
-    solver = SimpleEuler(f=f, time_range=t_range, y0=y0)
-    t_approx, y_approx = solver.solve(dt=dt)
+    # initialise and run the Simple Euler solver
+    solver_euler = SimpleEuler(f=f, time_range=t_range, y0=y0)
+    t_euler, y_euler = solver_euler.solve(dt=dt)
+
+    # initialise and run the RK4 solver
+    solver_RK4 = RK4(f=f, time_range=t_range, y0=y0)
+    t_RK4, y_RK4 = solver_RK4.solve(dt=dt)
 
     # calculate exact solution
     t_exact = np.linspace(t_range.start, t_range.end, 100)
@@ -33,14 +37,24 @@ def main():
         line=dict(color='black', width=2)
     ))
 
-    # add numerical approximation to figure
+    # add Simple Euler numerical approximation to figure
     fig.add_trace(go.Scatter(
-        x=t_approx,
-        y=y_approx[:, 0],
+        x=t_euler,
+        y=y_euler[:, 0],
         mode='lines+markers',
-        name='Approximate Solution',
+        name='Euler Approximate Solution',
         line=dict(color='red', dash='dash', width=2),
         marker=dict(size=8)
+    ))
+
+    # add RK4 numerical approximation to figure
+    fig.add_trace(go.Scatter(
+        x=t_RK4,
+        y=y_RK4[:, 0],
+        mode='lines+markers',
+        name='RK4 Approximate Solution',
+        line=dict(color='blue', dash='dot', width=2),
+        marker=dict(symbol='square', size=8)
     ))
 
     fig.update_layout(
