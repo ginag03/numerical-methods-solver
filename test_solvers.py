@@ -58,7 +58,7 @@ def main():
     ))
 
     fig.update_layout(
-        title='Testing Simple Euler Method',
+        title='Testing Numerical Methods',
         xaxis_title='Time (t)',
         yaxis_title='y(t)',
         plot_bgcolor='white',
