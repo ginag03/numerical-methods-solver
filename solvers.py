@@ -75,3 +75,21 @@ class SimpleEuler(OdeSolver):
         """
 
         return y + dt * self.f(t, y)
+    
+class RK4(OdeSolver):
+    """
+    Implements the 4th order Runge-Kutte Method
+    """
+
+    def step(self, t: float, y: np.ndarray, dt: float):
+        """
+        Calculates the next step of the system using weighted 
+        averages of the 4 intermediate steps
+        """
+
+        k1 = self.f(t, y)
+        k2 = self.f(t + 0.5 * dt, y + 0.5 * dt * k1)
+        k3 = self.f(t + 0.5 * dt, y + 0.5 * dt * k2)
+        k4 = self.f(t + dt, y + dt * k3)
+
+        return y + (dt / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4)
