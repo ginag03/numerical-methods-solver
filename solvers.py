@@ -64,3 +64,14 @@ class OdeSolver(ABC):
 
         return t_values, y_values
 
+class SimpleEuler(OdeSolver):
+    """
+    Implements the first-order Simple Euler Method
+    """
+
+    def step(self, t: float, y: np.ndarray, dt: float):
+        """
+        Calculates y[n + 1] = y[n] + dt * f(t[n], y[n])
+        """
+
+        return y + dt * self.f(t, y)
