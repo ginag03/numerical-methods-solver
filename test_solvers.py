@@ -1,16 +1,16 @@
 import numpy as np
-import plotly.graph_objects as go
+from safe_plotly import go
 from solvers import TimeRange, SimpleEuler, RK4
 
 def main():
     # Define the test ODE system and parameters.
     k = 1.0
 
-    def f(t, y):
+    def f(t: float, y: np.ndarray):
 
         return -k * y # the ODE dy/dt = -ky
     
-    y0 = 1.0
+    y0 = np.array([1.0])
     t_range = TimeRange(start=0.0, end=5.0)
     dt = 0.5
 
