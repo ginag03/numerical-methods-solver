@@ -1,65 +1,104 @@
-import Image from "next/image";
+"use client"; // tells Next.js we need browser interactivity
+
+import { useState } from "react";
+
+type Equation = "decay" | "lotka_volterra";
+type Method = "rk4" | "euler";
+
+interface SolverRequest {
+  equation: Equation;
+  method: Method;
+  dt: number;
+  t_end: number;
+  y0: number[];
+  k: number;
+}
 
 export default function Home() {
-  return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+  // state management for inputs
+  const [equation, setEquation] = useState<Equation>("decay");
+  const [method, setMethod] = useState<Method>("rk4");
+  const [dt, setDt] = useState("0.1");
+  const [tMax, setTMax] = useState("5");
+  const [k, setK] = useState("0.1");
+  const [y0String, setY0String] = useState("1.0"); // stored as string for text input
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSolve = () => {
+    // validation and submission engine
+    setError(null); // reset error state on new attempts
+
+    // parse y0 input
+    const y0Array = y0String.split(",").map((num) => parseFloat(num.trim()));
+
+    // check: were actual numbers entered for y0?
+    if (y0Array.some((num) => Number.isNaN(num))) {
+      setError("Invalid input for y0: please enter a comma-separated list of numbers (e.g., 0.9, 0.9)");
+      return;
+    }
+
+    // check: were the right number if ICs provided?
+    if (equation === "decay" && y0Array.length !== 1) {
+      setError("Decay equation requires exactly one initial condition (e.g., 1.0)");
+      return;
+    }
+
+    if (equation === "lotka_volterra" && y0Array.length !== 2) {
+      setError("Lotka-Volterra equation requires exactly two initial conditions (e.g., 0.9, 0.9)");
+      return;
+    }
+    
+    const dtNum = parseFloat(dt);
+    const tMaxNum = parseFloat(tMax);
+    const kNum = parseFloat(k);
+    // check: were dt, tMax, and k valid numbers?
+    if (Number.isNaN(dtNum)) {
+      setError("Invalid input for dt: please enter a valid number.");
+      return;
+    }
+
+    if (Number.isNaN(tMaxNum)) {
+      setError("Invalid input for tMax: please enter a valid number.");
+      return;
+    }
+
+    if (Number.isNaN(kNum)) {
+      setError("Invalid input for k: please enter a valid number.");
+      return;
+    }
+
+    if (dtNum <= 0) {
+      setError("dt must be greater than 0.");
+      return;
+    }
+
+    if (tMaxNum <= 0) {
+      setError("tMax must be greater than 0.");
+      return;
+    }
+
+    if (kNum < 0) {
+      setError("k must be non-negative.");
+      return;
+    }
+
+    // if validation is passed, prepare the payload for submission
+    const payload: SolverRequest = {
+      equation,
+      method,
+      dt: dtNum,
+      t_end: tMaxNum,
+      y0: y0Array,
+      k: kNum
+    };
+
+    console.log("Ready to send to FastAPI:", payload);
+  };
+
+  return(
+    <main>
+
+    </main>
   );
 }
+
