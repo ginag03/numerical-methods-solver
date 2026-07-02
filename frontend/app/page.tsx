@@ -17,7 +17,7 @@ interface SolverRequest {
 export default function Home() {
   // state management for inputs
   const [equation, setEquation] = useState<Equation>("decay");
-  const [method, setMethod] = useState<Method>("rk4");
+  const [method, setMethod] = useState<Method>("euler");
   const [dt, setDt] = useState("0.1");
   const [tMax, setTMax] = useState("5");
   const [k, setK] = useState("0.1");
@@ -95,10 +95,115 @@ export default function Home() {
     console.log("Ready to send to FastAPI:", payload);
   };
 
-  return(
-    <main>
+return(
+    <main className="min-h-screen bg-slate-950 text-slate-200 p-8 font-sans">
+      <div className="max-w-4xl mx-auto space-y-6">
 
+        <div>
+          <h1 className="text-3xl font-bold text-white tracking-tight">ODE Solver</h1>
+          <p className="text-slate-400 mt-2">Numerical methods for differential equations.</p>
+        </div>
+
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-xl">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+            <div className="flex flex-col space-y-2">
+              <label className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Equation Type</label>
+              <select
+                className="bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:ring-2 focus:ring-emerald-500 outline-none font-sans"
+                style={{ fontFamily: 'ui-sans-serif, system-ui, sans-serif' }}
+                value={equation}
+                onChange={(e) => {
+                  setEquation(e.target.value as Equation);
+                  setY0String(e.target.value === "decay" ? "1.0" : "0.9, 0.9");
+                }}
+              >
+                <option value="decay">Decay</option>
+                <option value="lotka_volterra">Lotka-Volterra</option>
+              </select>
+            </div>
+          
+            <div className="flex flex-col space-y-2">
+              <label className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Method</label>
+              <select
+                className="bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:ring-2 focus:ring-emerald-500 outline-none font-sans"
+                style={{ fontFamily: 'ui-sans-serif, system-ui, sans-serif' }}
+                value={method}
+                onChange={(e) => setMethod(e.target.value as Method)}
+              >
+                <option value="euler">Euler's Method</option>
+                <option value="rk4">Runge-Kutta 4th Order (RK4)</option>
+              </select>
+            </div>
+
+            <div className="flex flex-col space-y-2">
+              <label className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Initial Conditions (y0)</label>
+              <input
+                type="text"
+                className="bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:ring-2 focus:ring-emerald-500 outline-none font-sans"
+                value={y0String}
+                onChange={(e) => setY0String(e.target.value)}
+                placeholder={equation === "decay" ? "1.0" : "0.9, 0.9"}
+              />
+            </div>
+
+            {equation === "decay" && (
+              <div className="flex flex-col space-y-2">
+                <label className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Decay Constant (k)</label>
+                <input
+                  type="text"
+                  className="bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:ring-2 focus:ring-emerald-500 outline-none font-sans"
+                  value={k}
+                  onChange={(e) => setK(e.target.value)}
+                  placeholder="0.1"
+                />
+              </div>
+            )}
+
+            <div className="flex flex-col space-y-2">
+              <label className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Time Step (dt)</label>
+              <input
+                type="text"
+                className="bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:ring-2 focus:ring-emerald-500 outline-none font-sans"
+                value={dt}
+                onChange={(e) => setDt(e.target.value)}
+                placeholder="0.1"
+              />
+            </div>
+
+            <div className="flex flex-col space-y-2">
+              <label className="text-sm font-semibold text-slate-400 uppercase tracking-wider">End Time (tmax)</label>
+              <input
+                type="text"
+                className="bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:ring-2 focus:ring-emerald-500 outline-none font-sans"
+                value={tMax}
+                onChange={(e) => setTMax(e.target.value)}
+                placeholder="5.0"
+              />
+            </div>
+          </div>
+
+          {error && (
+            <div className="mt-6 p-4 bg-red-900/50 border border-red-500/50 rounded-lg text-red-200 text-sm">
+              {error}
+            </div>
+          )}
+
+          <div className="mt-6">
+            <button
+              onClick={handleSolve}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-lg transition-colors"
+            >
+              Solve Equation
+            </button>
+          </div>
+        </div>
+
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-xl min-h-[400px] flex flex-col items-center justify-center">
+          <p className="text-slate-400 text-lg">Graph will be displayed here</p>
+        </div>
+
+      </div>
     </main>
   );
 }
-
