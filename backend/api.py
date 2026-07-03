@@ -1,10 +1,22 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import numpy as np
 from solvers import TimeRange, SimpleEuler, RK4
 
 # initialise FastAPI app
 app = FastAPI(title='ODE Solver API')
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",  # frontend origin
+        "http://127.0.0.1:3000"
+    ],
+    allow_credentials=True,
+    allow_methods=["*"], # allows POST, GET, PUT, etc
+    allow_headers=["*"] # allows all headers
+)
 
 # define JSON structure expected from the frontend
 class SolveRequest(BaseModel):
