@@ -4,18 +4,18 @@ import { useState } from "react";
 import dynamic from "next/dynamic";
 
 // tell Next.js to only load plotly.js in the browser
-const Plot = dynamic(() => import("react-plotly.js"), { ssr:false});
+const Plot = dynamic(() => import("react-plotly.js"), { ssr:false });
 
 type Equation = "decay" | "lotka_volterra";
 type Method = "rk4" | "euler";
 
 interface SolverRequest {
-  equation: Equation;
-  method: Method;
-  dt: number;
-  t_end: number;
-  y0: number[];
-  k: number;
+  equation: Equation
+  method: Method
+  dt: number
+  t_end: number
+  y0: number[]
+  k: number
 }
 
 export default function Home() {
@@ -49,7 +49,7 @@ export default function Home() {
       return;
     }
 
-    // check: were the right number if ICs provided?
+    // check: were the right number of ICs provided?
     if (equation === "decay" && y0Array.length !== 1) {
       setError("Decay equation requires exactly one initial condition (e.g., 1.0)");
       setIsLoading(false);
@@ -121,8 +121,9 @@ export default function Home() {
         },
         body: JSON.stringify(payload)
       });
+
       // catch backend errors
-      if(!response.ok) {
+      if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.detail || "Failed to solve the equation.")
       }
@@ -130,9 +131,8 @@ export default function Home() {
       // extract arrays and save them to React state for plotting
       const data = await response.json();
       setChartData(data);
-
     } catch (err: any) {
-      setError((err.message) || "An unexpected error occured whilst solving the equation. Please try again later.");
+      setError(err.message || "An unexpected error occured whilst solving the equation. Please try again later.");
     } finally {
       // regardless of success or failure, turn off the loading state
       setIsLoading(false);
