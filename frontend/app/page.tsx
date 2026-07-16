@@ -44,19 +44,29 @@ export default function Home() {
   // state management for inputs
   const [equation, setEquation] = useState<Equation>("decay");
   const [method, setMethod] = useState<Method>("euler");
-  const [dt, setDt] = useState("0.1");
-  const [tMax, setTMax] = useState("5");
-  const [k, setK] = useState("0.1");
-  const [y0String, setY0String] = useState("1"); // stored as string for text input
+  const [dt, setDt] = useState("");
+  const [tMax, setTMax] = useState("");
+  const [k, setK] = useState("");
+  const [y0String, setY0String] = useState(""); // stored as string for text input
   const [error, setError] = useState<string | null>(null);
 
   const [chartData, setChartData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const [alpha, setAlpha] = useState("2/3");
-  const [beta, setBeta] = useState("4/3");
-  const [delta, setDelta] = useState("1");
-  const [gamma, setGamma] = useState("1");
+  const [alpha, setAlpha] = useState("");
+  const [beta, setBeta] = useState("");
+  const [delta, setDelta] = useState("");
+  const [gamma, setGamma] = useState("");
+
+  // if the user leaves the input blank, use parameters below
+  const activeY0 = y0String.trim() === "" ? (equation === "decay" ? "1.0" : "0.9, 0.9") : y0String;
+  const activeDt = dt.trim() === "" ? "0.1" : dt;
+  const activeTMax = tMax.trim() === "" ? "5.0" : tMax;
+  const activeK = k.trim() === "" ? "0.1" : k;
+  const activeAlpha = alpha.trim() === "" ? "2/3" : alpha;
+  const activeBeta = beta.trim() === "" ? "4/3" : beta;
+  const activeDelta = delta.trim() === "" ? "1.0" : delta;
+  const activeGamma = gamma.trim() === "" ? "1.0" : gamma;
 
   const handleSolve = async () => {
     // validation and submission engine
@@ -67,7 +77,7 @@ export default function Home() {
     setIsLoading(true);
 
     // parse y0 input
-    const y0Array = y0String.split(",").map((num) => parseFloat(num.trim()));
+    const y0Array = activeY0.split(",").map((num) => parseFloat(num.trim()));
 
     // check: were actual numbers entered for y0?
     if (y0Array.some((num) => Number.isNaN(num))) {
@@ -89,13 +99,13 @@ export default function Home() {
       return;
     }
     
-    const dtNum = parseInput(dt);
-    const tMaxNum = parseInput(tMax);
-    const kNum = parseInput(k);
-    const alphaNum = parseInput(alpha);
-    const betaNum = parseInput(beta);
-    const deltaNum = parseInput(delta);
-    const gammaNum = parseInput(gamma);
+    const dtNum = parseInput(activeDt);
+    const tMaxNum = parseInput(activeTMax);
+    const kNum = parseInput(activeK);
+    const alphaNum = parseInput(activeAlpha);
+    const betaNum = parseInput(activeBeta);
+    const deltaNum = parseInput(activeDelta);
+    const gammaNum = parseInput(activeGamma);
 
     // check: were dt, tMax, k, and LV parameters valid numbers?
     if (Number.isNaN(dtNum)) {
@@ -266,7 +276,7 @@ export default function Home() {
                 autoComplete="off"
                 onChange={(e) => {
                   setEquation(e.target.value as Equation);
-                  setY0String(e.target.value === "decay" ? "1.0" : "0.9, 0.9");
+                  setY0String("");
                 }}
               >
                 <option value="decay">Decay</option>
@@ -280,6 +290,7 @@ export default function Home() {
                 className="bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:ring-2 focus:ring-emerald-500 outline-none font-sans"
                 style={{ fontFamily: 'ui-sans-serif, system-ui, sans-serif' }}
                 value={method}
+                autoComplete="off"
                 onChange={(e) => setMethod(e.target.value as Method)}
               >
                 <option value="euler">Euler's Method</option>
@@ -346,7 +357,7 @@ export default function Home() {
                   max="3"
                   step="0.01"
                   className="w-full accent-emerald-500 cursor-pointer"
-                  value={Number.isNaN(parseInput(alpha)) ? 0 : parseInput(alpha)}
+                  value={Number.isNaN(parseInput(activeAlpha)) ? 0 : parseInput(activeAlpha)}
                   onChange={(e) => setAlpha(e.target.value)}
                   />
                   <input
@@ -354,6 +365,7 @@ export default function Home() {
                   className="bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:ring-2 focus:ring-emerald-500 outline-none font-sans text-center text-sm"
                   value={alpha}
                   onChange={(e) => setAlpha(e.target.value)}
+                  placeholder="2/3"
                   />
                 </div>
               </div>
@@ -367,7 +379,7 @@ export default function Home() {
                   max="3"
                   step="0.01"
                   className="w-full accent-emerald-500 cursor-pointer"
-                  value={Number.isNaN(parseInput(beta)) ? 0 : parseInput(beta)}
+                  value={Number.isNaN(parseInput(activeBeta)) ? 0 : parseInput(activeBeta)}
                   onChange={(e) => setBeta(e.target.value)}
                   />
                   <input
@@ -375,6 +387,7 @@ export default function Home() {
                   className="bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:ring-2 focus:ring-emerald-500 outline-none font-sans text-center text-sm"
                   value={beta}
                   onChange={(e) => setBeta(e.target.value)}
+                  placeholder="4/3"
                   />
                 </div>
               </div>
@@ -388,7 +401,7 @@ export default function Home() {
                   max="3"
                   step="0.01"
                   className="w-full accent-emerald-500 cursor-pointer"
-                  value={Number.isNaN(parseInput(delta)) ? 0 : parseInput(delta)}
+                  value={Number.isNaN(parseInput(activeDelta)) ? 0 : parseInput(activeDelta)}
                   onChange={(e) => setDelta(e.target.value)}
                   />
                   <input
@@ -396,6 +409,7 @@ export default function Home() {
                   className="bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:ring-2 focus:ring-emerald-500 outline-none font-sans text-center text-sm"
                   value={delta}
                   onChange={(e) => setDelta(e.target.value)}
+                  placeholder="1.0"
                   />
                 </div>
               </div>
@@ -409,7 +423,7 @@ export default function Home() {
                   max="3"
                   step="0.01"
                   className="w-full accent-emerald-500 cursor-pointer"
-                  value={Number.isNaN(parseInput(gamma)) ? 0 : parseInput(gamma)}
+                  value={Number.isNaN(parseInput(activeGamma)) ? 0 : parseInput(activeGamma)}
                   onChange={(e) => setGamma(e.target.value)}
                   />
                   <input
@@ -417,6 +431,7 @@ export default function Home() {
                   className="bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:ring-2 focus:ring-emerald-500 outline-none font-sans text-center text-sm"
                   value={gamma}
                   onChange={(e) => setGamma(e.target.value)}
+                  placeholder="1.0"
                   />  
                 </div>
               </div>
@@ -455,7 +470,7 @@ export default function Home() {
                 data={buildPlotlyData()}
                 layout={{
                   autosize: true,
-                  uirevision: tMax + dt + equation + method, // force reset when inputs change 
+                  uirevision: activeTMax + activeDt + equation + method, // force reset when inputs change 
                   paper_bgcolor: 'transparent',
                   plot_bgcolor: 'transparent',
                   font: { color: '#E5E7EB' }, // Tailwind slate-200
