@@ -27,6 +27,12 @@ class SolveRequest(BaseModel):
     method: str  # 'euler' or 'rk4'
     k: float = 1.0  # default value for k if not provided
 
+    # Lotka-Volterra parameters
+    alpha: float = 2.0/3.0
+    beta: float = 4.0/3.0
+    delta: float = 1.0
+    gamma: float = 1.0
+
 # ensuring return type is correct for the API
 class SolveResponse(BaseModel):
     status: str
@@ -48,15 +54,11 @@ def solve_ode(request: SolveRequest) -> SolveResponse:
         return -request.k * y # define ODE function dy/dt = -k * y
 
     def lv_f(t: float, Y: np.ndarray) -> np.ndarray:
-        alpha = 2.0 / 3.0
-        beta = 4.0 / 3.0
-        delta = 1.0
-        gamma = 1.0
 
         x, y = Y[0], Y[1]
 
-        dx_dt = alpha * x -  beta * x * y
-        dy_dt = delta * x * y - gamma * y
+        dx_dt = request.alpha * x -  request.beta * x * y
+        dy_dt = request.delta * x * y - request.gamma * y
 
         return np.array([dx_dt, dy_dt])
 

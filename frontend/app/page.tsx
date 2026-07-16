@@ -16,6 +16,28 @@ interface SolverRequest {
   t_end: number
   y0: number[]
   k: number
+  alpha: number
+  beta: number
+  delta: number
+  gamma: number
+}
+
+// fraction parser for Lotka-Volterra parameters
+const parseInput = (val: string): number => {
+  const trimmed = val.trim();
+  if (trimmed.includes("/")) {
+    const parts = trimmed.split("/");
+    if (parts.length === 2) {
+      const numerator = parseFloat(parts[0]);
+      const denominator = parseFloat(parts[1]);
+      if (denominator === 0) {
+        throw new Error("Denominator cannot be zero.");
+      }
+      return numerator / denominator;
+    }
+    return NaN; // invalid fraction format
+  }
+  return parseFloat(trimmed); // 
 }
 
 export default function Home() {
@@ -25,11 +47,16 @@ export default function Home() {
   const [dt, setDt] = useState("0.1");
   const [tMax, setTMax] = useState("5");
   const [k, setK] = useState("0.1");
-  const [y0String, setY0String] = useState("1.0"); // stored as string for text input
+  const [y0String, setY0String] = useState("1"); // stored as string for text input
   const [error, setError] = useState<string | null>(null);
 
   const [chartData, setChartData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  const [alpha, setAlpha] = useState("2/3");
+  const [beta, setBeta] = useState("4/3");
+  const [delta, setDelta] = useState("1");
+  const [gamma, setGamma] = useState("1");
 
   const handleSolve = async () => {
     // validation and submission engine
@@ -62,10 +89,15 @@ export default function Home() {
       return;
     }
     
-    const dtNum = parseFloat(dt);
-    const tMaxNum = parseFloat(tMax);
-    const kNum = parseFloat(k);
-    // check: were dt, tMax, and k valid numbers?
+    const dtNum = parseInput(dt);
+    const tMaxNum = parseInput(tMax);
+    const kNum = parseInput(k);
+    const alphaNum = parseInput(alpha);
+    const betaNum = parseInput(beta);
+    const deltaNum = parseInput(delta);
+    const gammaNum = parseInput(gamma);
+
+    // check: were dt, tMax, k, and LV parameters valid numbers?
     if (Number.isNaN(dtNum)) {
       setError("Invalid input for dt: please enter a valid number.");
       setIsLoading(false);
@@ -78,7 +110,7 @@ export default function Home() {
       return;
     }
 
-    if (Number.isNaN(kNum)) {
+    if (equation === "decay" && Number.isNaN(kNum)) {
       setError("Invalid input for k: please enter a valid number.");
       setIsLoading(false);
       return;
@@ -96,8 +128,32 @@ export default function Home() {
       return;
     }
 
-    if (kNum < 0) {
+    if (equation === "decay" && kNum < 0) {
       setError("k must be non-negative.");
+      setIsLoading(false);
+      return;
+    }
+
+    if (equation === "lotka_volterra" && Number.isNaN(alphaNum)) {
+      setError("Invalid input for alpha: please enter a valid number.");
+      setIsLoading(false);
+      return;
+    }
+
+    if (equation === "lotka_volterra" && Number.isNaN(betaNum)) {
+      setError("Invalid input for beta: please enter a valid number.");
+      setIsLoading(false);
+      return;
+    }
+
+    if (equation === "lotka_volterra" && Number.isNaN(deltaNum)) {
+      setError("Invalid input for delta: please enter a valid number.");
+      setIsLoading(false);
+      return;
+    }
+
+    if (equation === "lotka_volterra" && Number.isNaN(gammaNum)) {
+      setError("Invalid input for gamma: please enter a valid number.");
       setIsLoading(false);
       return;
     }
@@ -109,7 +165,11 @@ export default function Home() {
       dt: dtNum,
       t_end: tMaxNum,
       y0: y0Array,
-      k: kNum
+      k: kNum,
+      alpha: alphaNum,
+      beta: betaNum,
+      delta:deltaNum,
+      gamma: gammaNum
     };
 
     try{
@@ -203,6 +263,7 @@ export default function Home() {
                 className="bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:ring-2 focus:ring-emerald-500 outline-none font-sans"
                 style={{ fontFamily: 'ui-sans-serif, system-ui, sans-serif' }}
                 value={equation}
+                autoComplete="off"
                 onChange={(e) => {
                   setEquation(e.target.value as Equation);
                   setY0String(e.target.value === "decay" ? "1.0" : "0.9, 0.9");
@@ -272,6 +333,95 @@ export default function Home() {
               />
             </div>
           </div>
+
+          {equation === "lotka_volterra" && (
+            <>
+              <div className="flex flex-col space-y-2 col-span-1 md:col-span-2 lg:col-span-1">
+                <h3 className="pt-4 text-lg font-semibold text-white">Lotka-Volterra Parameters</h3>
+                <label className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Alpha</label>
+                <div className="flex items-center space-x-3">
+                  <input
+                  type="range"
+                  min="0"
+                  max="3"
+                  step="0.01"
+                  className="w-full accent-emerald-500 cursor-pointer"
+                  value={Number.isNaN(parseInput(alpha)) ? 0 : parseInput(alpha)}
+                  onChange={(e) => setAlpha(e.target.value)}
+                  />
+                  <input
+                  type="text"
+                  className="bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:ring-2 focus:ring-emerald-500 outline-none font-sans text-center text-sm"
+                  value={alpha}
+                  onChange={(e) => setAlpha(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col space-y-2 col-span-1 md:col-span-2 lg:col-span-1">
+                <label className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Beta</label>
+                <div className="flex items-center space-x-3">
+                  <input
+                  type="range"
+                  min="0"
+                  max="3"
+                  step="0.01"
+                  className="w-full accent-emerald-500 cursor-pointer"
+                  value={Number.isNaN(parseInput(beta)) ? 0 : parseInput(beta)}
+                  onChange={(e) => setBeta(e.target.value)}
+                  />
+                  <input
+                  type="text"
+                  className="bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:ring-2 focus:ring-emerald-500 outline-none font-sans text-center text-sm"
+                  value={beta}
+                  onChange={(e) => setBeta(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col space-y-2 col-span-1 md:col-span-2 lg:col-span-1">
+                <label className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Delta</label>
+                <div className="flex items-center space-x-3">
+                  <input
+                  type="range"
+                  min="0"
+                  max="3"
+                  step="0.01"
+                  className="w-full accent-emerald-500 cursor-pointer"
+                  value={Number.isNaN(parseInput(delta)) ? 0 : parseInput(delta)}
+                  onChange={(e) => setDelta(e.target.value)}
+                  />
+                  <input
+                  type="text"
+                  className="bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:ring-2 focus:ring-emerald-500 outline-none font-sans text-center text-sm"
+                  value={delta}
+                  onChange={(e) => setDelta(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col space-y-2 col-span-1 md:col-span-2 lg:col-span-1">
+                <label className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Gamma</label>
+                <div className="flex items-center space-x-3">
+                  <input
+                  type="range"
+                  min="0"
+                  max="3"
+                  step="0.01"
+                  className="w-full accent-emerald-500 cursor-pointer"
+                  value={Number.isNaN(parseInput(gamma)) ? 0 : parseInput(gamma)}
+                  onChange={(e) => setGamma(e.target.value)}
+                  />
+                  <input
+                  type="text"
+                  className="bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:ring-2 focus:ring-emerald-500 outline-none font-sans text-center text-sm"
+                  value={gamma}
+                  onChange={(e) => setGamma(e.target.value)}
+                  />  
+                </div>
+              </div>
+            </>
+          )}
 
           {error && (
             <div className="mt-6 p-4 bg-red-900/50 border border-red-500/50 rounded-lg text-red-200 text-sm">
