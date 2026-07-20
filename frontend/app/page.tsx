@@ -1,6 +1,6 @@
 "use client"; // tells Next.js we need browser interactivity
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import dynamic from "next/dynamic";
 
 // tell Next.js to only load plotly.js in the browser
@@ -64,6 +64,13 @@ export default function Home() {
   const [beta, setBeta] = useState("");
   const [delta, setDelta] = useState("");
   const [gamma, setGamma] = useState("");
+
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const handleCancel = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort(); // kill the fetch request
+    }
+  }
 
   // if the user leaves the input blank, use parameters below
   const activeY0 = y0String.trim() === "" ? (equation === "decay" ? "1.0" : "0.9, 0.9") : y0String;
@@ -190,13 +197,17 @@ export default function Home() {
     };
 
     try{
+      // create new abort controller for this request
+      abortControllerRef.current = new AbortController();
+
       // send the payload to FastAPI
       const response = await fetch("http://127.0.0.1:8000/solve", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
+        signal: abortControllerRef.current.signal // attach abort signal to fetch request
       });
 
       // catch backend errors
@@ -209,7 +220,11 @@ export default function Home() {
       const data = await response.json();
       setChartData(data);
     } catch (err: any) {
-      setError(err.message || "An unexpected error occured whilst solving the equation. Please try again later.");
+      if (err.name === "AbortError") {
+        setError("The request was cancelled.");
+      } else {
+        setError(err.message || "An unexpected error occured whilst solving the equation. Please try again later.");
+      }
     } finally {
       // regardless of success or failure, turn off the loading state
       setIsLoading(false);
@@ -451,7 +466,7 @@ export default function Home() {
             </div>
           )}
 
-          <div className="mt-6">
+          <div className="mt-6 flex space-x-4 w-full">
             <button
               onClick={handleSolve}
               disabled={isLoading}
@@ -461,6 +476,15 @@ export default function Home() {
             >
               {isLoading ? "Solving..." : "Solve Equation"}
             </button>
+
+            {isLoading && (
+              <button
+                onClick={handleCancel}
+                className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+            )}
           </div>
         </div>
 
