@@ -4,7 +4,14 @@ import { useState } from "react";
 import dynamic from "next/dynamic";
 
 // tell Next.js to only load plotly.js in the browser
-const Plot = dynamic(() => import("react-plotly.js"), { ssr:false });
+const Plot = dynamic(() => import("react-plotly.js"), { 
+  ssr:false, 
+  loading: () => (
+    <div className='flex flex-col items-center justify-center w-full h-full'>
+      <p className='text-emerald-400 animate-pulse text-lg'>Creating plot...</p>
+    </div>
+  )
+});
 
 type Equation = "decay" | "lotka_volterra";
 type Method = "rk4" | "euler";
