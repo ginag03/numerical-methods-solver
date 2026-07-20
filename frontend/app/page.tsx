@@ -528,7 +528,57 @@ export default function Home() {
           )}
           
         </div>
+        
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-xl">
+          <h2 className="text-xl font-semibold text-white mb-4">Mathematical Properties</h2>
+          {equation === "decay" && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="bg-slate-800 p-4 rounded-lg border border-slate-800">
+                <p className="text-sm text-slate-400 uppercase tracking-wider font-semibold mb-1">Half-Life</p>
+                <p className="text-2xl font-mono text-emerald-400">
+                  {Number.isNaN(parseInput(activeK)) || parseInput(activeK) <= 0 
+                  ? "N/A"
+                  : (Math.log(2) / parseInput(activeK)).toFixed(3)} seconds
+                </p>
+                <p className="text-sm text-slate-500 mt-2">Time required for the quantity to reach exactly half of its initial value.</p>
+              </div>
+            </div>
+          )}
 
+          {equation === "lotka_volterra" && (
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-lg font-semibold text-white">Coexistence Equilibrium Point (x*, y*)</h3>
+                <p className="text-sm text-slate-400 mb-1">The point where both populations are able to coexist, no population grows or shrinks.</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-slate-800 p-4 rounded-lg border border-slate-800">
+                  <p className="text-sm text-slate-400 uppercase tracking-wider font-semibold mb-1">Prey Equilibrium (x*)</p>
+                  <p className="text-2xl font-mono text-emerald-400">
+                    {Number.isNaN(parseInput(activeGamma)) || Number.isNaN(parseInput(activeDelta)) || parseInput(activeDelta) === 0
+                      ? "N/A"
+                      : (parseInput(activeGamma) / parseInput(activeDelta)).toFixed(3)}
+                  </p>
+                  <p className="text-sm text-slate-500 mt-2">Equilibrium point where prey population stabilises.</p>
+                </div>
+
+                <div className="bg-slate-800 p-4 rounded-lg border border-slate-800">
+                  <p className="text-sm text-slate-400 uppercase tracking-wider font-semibold mb-1">Predator Equilibrium (y*)</p>
+                  <p className="text-2xl font-mono text-red-400">
+                    {Number.isNaN(parseInput(activeAlpha)) || Number.isNaN(parseInput(activeBeta)) || parseInput(activeBeta) === 0
+                      ? "N/A"
+                      : (parseInput(activeAlpha) / parseInput(activeBeta)).toFixed(3)}
+                  </p>
+                  <p className="text-sm text-slate-500 mt-2">Equilibrium point where predator population stabilises.</p>
+                </div>
+              </div>
+            </div>
+
+            
+
+          )}
+        </div>
       </div>
     </main>
   );
