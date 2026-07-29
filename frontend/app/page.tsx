@@ -13,7 +13,7 @@ const Plot = dynamic(() => import("react-plotly.js"), {
   )
 });
 
-type Equation = "decay" | "lotka_volterra";
+type Equation = "decay" | "lotka_volterra" | "custom";
 type Method = "rk4" | "euler";
 
 interface SolverRequest {
@@ -27,6 +27,7 @@ interface SolverRequest {
   beta: number
   delta: number
   gamma: number
+  custom_formula?: string
 }
 
 // fraction parser for Lotka-Volterra parameters
@@ -65,6 +66,8 @@ export default function Home() {
   const [delta, setDelta] = useState("");
   const [gamma, setGamma] = useState("");
 
+  const [customFormula, setCustomFormula] = useState("");
+
   const abortControllerRef = useRef<AbortController | null>(null);
   const handleCancel = () => {
     if (abortControllerRef.current) {
@@ -73,7 +76,9 @@ export default function Home() {
   }
 
   // if the user leaves the input blank, use parameters below
-  const activeY0 = y0String.trim() === "" ? (equation === "decay" ? "1.0" : "0.9, 0.9") : y0String;
+  const activeY0 = y0String.trim() === "" 
+    ? (equation === "lotka_volterra" ? "0.9, 0.9" : "1.0") 
+    : y0String;
   const activeDt = dt.trim() === "" ? "0.1" : dt;
   const activeTMax = tMax.trim() === "" ? "5.0" : tMax;
   const activeK = k.trim() === "" ? "0.1" : k;
@@ -81,6 +86,7 @@ export default function Home() {
   const activeBeta = beta.trim() === "" ? "4/3" : beta;
   const activeDelta = delta.trim() === "" ? "1.0" : delta;
   const activeGamma = gamma.trim() === "" ? "1.0" : gamma;
+  const activeCustomFormula = customFormula.trim() === "" ? "-0.5 * y + sin(t)": customFormula;
 
   const handleSolve = async () => {
     // validation and submission engine
@@ -109,6 +115,18 @@ export default function Home() {
 
     if (equation === "lotka_volterra" && y0Array.length !== 2) {
       setError("Lotka-Volterra equation requires exactly two initial conditions (e.g., 0.9, 0.9)");
+      setIsLoading(false);
+      return;
+    }
+
+    if (equation === "custom" && y0Array.length !== 1) {
+      setError("Custom equation requires exactly one initial condition (e.g., 1.0)");
+      setIsLoading(false);
+      return;
+    }
+
+    if (equation === "custom" && activeCustomFormula.trim() === "") {
+      setError("Please enter a valid custom formula.");
       setIsLoading(false);
       return;
     }
@@ -193,7 +211,8 @@ export default function Home() {
       alpha: alphaNum,
       beta: betaNum,
       delta:deltaNum,
-      gamma: gammaNum
+      gamma: gammaNum,
+      custom_formula: activeCustomFormula
     };
 
     try{
@@ -240,7 +259,7 @@ export default function Home() {
     const y0_column = chartData.y_values.map((row: number[]) => row[0]);
 
     // draw one line for decay
-    if (equation === "decay") {
+    if (equation === "decay" || equation === "custom") {
       return [
         {
           x: chartData.t_values,
@@ -303,6 +322,7 @@ export default function Home() {
               >
                 <option value="decay">Decay</option>
                 <option value="lotka_volterra">Lotka-Volterra</option>
+                <option value="custom">Custom</option>
               </select>
             </div>
           
@@ -327,7 +347,7 @@ export default function Home() {
                 className="bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:ring-2 focus:ring-emerald-500 outline-none font-sans"
                 value={y0String}
                 onChange={(e) => setY0String(e.target.value)}
-                placeholder={equation === "decay" ? "1.0" : "0.9, 0.9"}
+                placeholder={equation === "lotka_volterra" ? "0.9, 0.9" : "1.0"}
               />
             </div>
 
@@ -460,6 +480,26 @@ export default function Home() {
             </>
           )}
 
+          {equation === "custom" && (
+            <div className="mt-6 border-t border-slate-800 pt-6">
+              <div className="flex flex-col space-y-2">
+                <label className="text-sm font-semibold text-slate-400 uppercase tracking-wider">
+                  Custom Formula: dy/dt = f(t, y)
+                </label>
+                <input
+                  type="text"
+                  className="bg-slate-800 border border-slate-700 rounded-lg p-3 text-white focus:ring-2 focus:ring-emerald-500 outline-none font-mono text-sm placeholder-slate-500"
+                  value={customFormula}
+                  onChange={(e) => setCustomFormula(e.target.value)}
+                  placeholder="-0.5 * y + sin(t)"
+                />
+                <p className="text-xs text-slate-400">
+                  Allowed variables: <code className="text-emerald-400 font-mono">t</code>, <code className="text-emerald-400 font-mono">y</code>. Allowed functions: <code className="text-emerald-400 font-mono">sin</code>, <code className="text-emerald-400 font-mono">cos</code>, <code className="text-emerald-400 font-mono">tan</code>, <code className="text-emerald-400 font-mono">exp</code>, <code className="text-emerald-400 font-mono">log</code>, <code className="text-emerald-400 font-mono">sqrt</code>, <code className="text-emerald-400 font-mono">abs</code>.
+                </p>
+              </div>
+            </div>
+          )}
+
           {error && (
             <div className="mt-6 p-4 bg-red-900/50 border border-red-500/50 rounded-lg text-red-200 text-sm">
               {error}
@@ -501,7 +541,7 @@ export default function Home() {
                 data={buildPlotlyData()}
                 layout={{
                   autosize: true,
-                  uirevision: activeTMax + activeDt + equation + method, // force reset when inputs change 
+                  uirevision: activeTMax + activeDt + equation + method + activeCustomFormula, // force reset when inputs change 
                   paper_bgcolor: 'transparent',
                   plot_bgcolor: 'transparent',
                   font: { color: '#E5E7EB' }, // Tailwind slate-200
@@ -574,9 +614,6 @@ export default function Home() {
                 </div>
               </div>
             </div>
-
-            
-
           )}
         </div>
       </div>
