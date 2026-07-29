@@ -2,7 +2,64 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import numpy as np
+import sympy as sp
+from sympy.parsing.sympy_parser import parse_expr, standard_transformations, implicit_multiplication_application
+import numpy.typing as npt
+from typing import Any, Dict, List, Optional, Protocol, Union
 from solvers import TimeRange, SimpleEuler, RK4
+
+# safe maths parser:
+
+# define allowed numeric inputs and outputs for the safe function
+NumericInput = Union[int, float, npt.NDArray[np.float64]]
+NumericOutput = Union[float, npt.NDArray[np.float64]]
+
+# protocol for the safe function type
+class SafeFunction(Protocol):
+    def __call__(self, *args: NumericInput) -> NumericOutput:
+        ...
+
+def create_safe_function(equation_string: str, variable_names: list[str]) -> Optional[SafeFunction]:
+    """
+    Safely convert string of maths to executablenumpy function using sympy
+    """
+    try:
+        # whitelist for allowed symbols
+        symbols: List[sp.Symbol] = [sp.Symbol(name) for name in variable_names]
+        symbol_dict: Dict[str, sp.Symbol] = {name: symbols for name, symbols in zip(variable_names, symbols)}
+        # also whitelist allowed functions
+        function_whitelist: Dict[str, Any] = {
+            'sin': sp.sin,
+            'cos': sp.cos,
+            'tan': sp.tan,
+            'exp': sp.exp,
+            'log': sp.log,
+            'sqrt': sp.sqrt, # type: ignore
+            'abs': sp.Abs,
+            'pi': sp.pi
+        }
+        allowed_globals: Dict[str, Any] =  {**symbol_dict, **function_whitelist}
+
+        # allow users to type implicit multiplication (e.g., 2x instead of 2*x)
+        transformations = standard_transformations + (implicit_multiplication_application,)
+
+        # parse the equation string into a sympy expression
+        safe_expr: sp.Expr = parse_expr(
+            equation_string,
+            local_dict=allowed_globals,
+            global_dict={}, # no global functions allowed
+            transformations=transformations
+        )
+        print(f'Parsed expression: {safe_expr}')
+
+        # translate sympy expression to a numpy function
+        numpy_func = sp.lambdify(symbols, safe_expr, modules=['numpy'])
+
+        return numpy_func
+
+    except Exception as e:
+        print(f'Error parsing equation: {e}')
+        return None
 
 # initialise FastAPI app
 app = FastAPI(title='ODE Solver API')
@@ -32,6 +89,9 @@ class SolveRequest(BaseModel):
     beta: float = 4.0/3.0
     delta: float = 1.0
     gamma: float = 1.0
+
+    # allow optional custom formula string
+    custom_formula: Optional[str] = None
 
 # ensuring return type is correct for the API
 class SolveResponse(BaseModel):
@@ -66,8 +126,29 @@ def solve_ode(request: SolveRequest) -> SolveResponse:
         f = decay_f
     elif eq_name == 'lotka_volterra':
         f = lv_f
+    elif eq_name == 'custom':
+        if not request.custom_formula:
+            raise HTTPException(status_code=400, detail='Please input your own custom formula.')
+        if len(request.y0) != 1:
+            raise HTTPException(status_code=400, detail='1D ODEs require a single initial condition in y0.')
+
+        # pass string to safe function parser, explicitly allowing only 't' and 'y' as variables
+        safe_func = create_safe_function(request.custom_formula, ['t', 'y'])
+
+        if safe_func is None:
+            raise HTTPException(status_code=400, detail='Invalid custom formula. Please check your syntax and the allowed functions.')
+
+        # define f so it unpacks y[0] for sympy and returns a 1d numpy array
+        def custom_f(t: float, y: np.ndarray) -> np.ndarray:
+            try:
+                val = safe_func(t, y[0])
+                return np.array([val], dtype=np.float64)
+            except Exception as e:
+                raise HTTPException(status_code=400, detail=f'Error evaluating custom formula: {e}')
+
+        f = custom_f
     else:
-        raise HTTPException(status_code=400, detail='Equation must be either \'decay\' or \'lotka_volterra\'.')
+        raise HTTPException(status_code=400, detail='Equation must be either \'decay\', \'lotka_volterra\', or \'custom\'.')
 
     time_range = TimeRange(start=0.0, end=request.t_end)
 
