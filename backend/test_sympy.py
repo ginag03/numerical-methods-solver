@@ -1,7 +1,7 @@
 import numpy as np
 import numpy.typing as npt
 import sympy as sp
-from sympy.parsing.sympy_parser import parse_expr, standard_transformations, implicit_multiplication_application
+from sympy.parsing.sympy_parser import parse_expr, standard_transformations, implicit_multiplication_application, convert_xor
 from typing import Any, Dict, List, Optional, Protocol, Union
 
 # define allowed numeric inputs and outputs for the safe function
@@ -35,7 +35,7 @@ def create_safe_function(equation_string: str, variable_names: list[str]) -> Opt
         allowed_globals: Dict[str, Any] =  {**symbol_dict, **function_whitelist}
 
         # allow users to type implicit multiplication (e.g., 2x instead of 2*x)
-        transformations = standard_transformations + (implicit_multiplication_application,)
+        transformations = standard_transformations + (implicit_multiplication_application, convert_xor)
 
         # parse the equation string into a sympy expression
         safe_expr: sp.Expr = parse_expr(

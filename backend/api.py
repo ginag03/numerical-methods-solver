@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import numpy as np
 import sympy as sp
-from sympy.parsing.sympy_parser import parse_expr, standard_transformations, implicit_multiplication_application
+from sympy.parsing.sympy_parser import parse_expr, standard_transformations, implicit_multiplication_application, convert_xor
 import numpy.typing as npt
 from typing import Any, Dict, List, Optional, Protocol, Union
 from solvers import TimeRange, SimpleEuler, RK4
@@ -38,10 +38,20 @@ def create_safe_function(equation_string: str, variable_names: list[str]) -> Opt
             'abs': sp.Abs,
             'pi': sp.pi
         }
-        allowed_globals: Dict[str, Any] =  {**symbol_dict, **function_whitelist}
+
+        core_whitelist: Dict[str, Any] = {
+            "Integer": sp.Integer,
+            "Float": sp.Float,
+            "Symbol": sp.Symbol,
+            "Add": sp.Add,
+            "Mul": sp.Mul,
+            "Pow": sp.Pow,
+        }
+
+        allowed_globals: Dict[str, Any] =  {**symbol_dict, **function_whitelist, **core_whitelist}
 
         # allow users to type implicit multiplication (e.g., 2x instead of 2*x)
-        transformations = standard_transformations + (implicit_multiplication_application,)
+        transformations = standard_transformations + (implicit_multiplication_application, convert_xor)
 
         # parse the equation string into a sympy expression
         safe_expr: sp.Expr = parse_expr(
