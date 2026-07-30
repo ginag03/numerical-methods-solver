@@ -62,3 +62,12 @@ npm run dev
 ## Architecture Notes
 
 To prevent injection attacks from the custom equation input, the backend utilises Sympy's `parse_epr` with an explicitly emptied `global_dict`. This creates a strict mathematical whitelist (e.g., `sin`, `cos`, `t`, `y`), instantly crashing if malicious system commands are detected, before compiling the safe abstract syntax tree into a vectorised NumPy function using `lambdify`.
+
+## AI Transparency
+
+Generative AI was used as a tool during the development of this project. The ways I used AI are:
+
+- **Exploring ideas:** Brainstorming, planning, and refining ideas.
+- **Debugging:** Assistance with debugging select issues.
+
+All architectural decisions, security boundaries (e.g., SymPy global dictionary sandboxing and AST whitelisting), and strict typing were my own ideas and written by hand. 
