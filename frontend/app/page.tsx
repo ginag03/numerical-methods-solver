@@ -30,6 +30,19 @@ interface SolverRequest {
   custom_formula?: string
 }
 
+interface OdePreset {
+  label: string
+  formula: string
+  y0: string
+  tMax: string
+}
+
+const customPresets: OdePreset[] = [
+  {label: "Damped Oscillator", formula: "-0.5 * y - sin(t)", y0: "1.0", tMax: "15.0" },
+  {label: "Logistic Growth", formula: "y * (1 - y / 10)", y0: "0.5", tMax: "10.0"},
+  {label: "Polynomial Growth", formula: "t^2 - 0.5 * y", y0: "1.0", tMax: "8.00"}
+]
+
 // fraction parser for Lotka-Volterra parameters
 const parseInput = (val: string): number => {
   const trimmed = val.trim();
@@ -67,6 +80,11 @@ export default function Home() {
   const [gamma, setGamma] = useState("");
 
   const [customFormula, setCustomFormula] = useState("");
+  const applyPreset = (preset: OdePreset) => {
+    setCustomFormula(preset.formula);
+    setY0String(preset.y0);
+    setTMax(preset.tMax);
+  }
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const handleCancel = () => {
@@ -493,10 +511,45 @@ export default function Home() {
                   onChange={(e) => setCustomFormula(e.target.value)}
                   placeholder="-0.5 * y + sin(t)"
                 />
-                <p className="text-xs text-slate-400">
-                  Allowed variables: <code className="text-emerald-400 font-mono">t</code>, <code className="text-emerald-400 font-mono">y</code>. Allowed functions: <code className="text-emerald-400 font-mono">sin</code>, <code className="text-emerald-400 font-mono">cos</code>, <code className="text-emerald-400 font-mono">tan</code>, <code className="text-emerald-400 font-mono">exp</code>, <code className="text-emerald-400 font-mono">log</code>, <code className="text-emerald-400 font-mono">sqrt</code>, <code className="text-emerald-400 font-mono">abs</code>.
-                </p>
               </div>
+
+              <div className="flex flex-col space-y-1.5">
+                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider mt-2">Try a Preset Formula:</span>
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {customPresets.map((preset) => (
+                    <button
+                      key={preset.label}
+                      type="button"
+                      onClick={() => applyPreset(preset)}
+                      className="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-medium py-1.5 px-3 rounded-full border border-slate-700 hover:border-slate-600 transition-colours cursor-pointer"
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <details className="mt-3 group bg-slate-800/60 border border-slate-800 rounded-lg text-xs text-slate-400">
+                <summary className="p-3 font-semibold text-slate-300 gap-1 cursor-pointer select-none flex items-center hover:text-emerald-400 transition-colors">
+                  <span className="text-slate-400 group-open:rotate-0 -rotate-90 transition-transform">&#9660;</span>
+                  <span>Custom Formula Help</span>
+                </summary>
+                <div className="p-3 border-t border-slate-800/80 text-slate-300">
+                <p>
+                  <strong>Variables:</strong> Use <code className="text-emerald-400 font-mono">t</code> for time and <code className="text-emerald-400 font-mono">y</code> for the dependent variable.
+                </p>
+                <p>
+                  <strong>Powers:</strong> You can use either <code className="text-emerald-400 font-mono">^</code> or <code className="text-emerald-400 font-mono">**</code> for powers. For example, <code className="text-emerald-400 font-mono">t^2</code> or <code className="text-emerald-400 font-mono">t**2</code> both represent t squared.
+                </p>
+                <p>
+                  <strong>Functions and Constants:</strong> You can use standard mathematical functions <code className="text-emerald-400 font-mono">sin()</code>, <code className="text-emerald-400 font-mono">cos()</code>, <code className="text-emerald-400 font-mono">tan()</code>, constant <code className="text-emerald-400 font-mono">pi</code>.
+                </p>
+                <p>
+                  <strong>Roots, Exponentials, Logarithms, and Modulus:</strong> Use <code className="text-emerald-400 font-mono">sqrt()</code> for square roots, <code className="text-emerald-400 font-mono">exp()</code> for exponentials, <code className="text-emerald-400 font-mono">log()</code> for logarithms, and <code className="text-emerald-400 font-mono">abs()</code> for the modulus function, or absolute value. For example, <code className="text-emerald-400 font-mono">sqrt(t)</code> represents the square root of t.
+                </p>
+
+                </div>
+              </details>
             </div>
           )}
 
@@ -510,7 +563,7 @@ export default function Home() {
             <button
               onClick={handleSolve}
               disabled={isLoading}
-              className={`bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-lg transition-colors ${
+              className={`bg-emerald-600 hover:bg-emerald-700 border border-emerald-500 hover:border-emerald-600 text-white font-bold py-3 px-4 rounded-lg transition-colors ${
                 isLoading ? 'bg-slate-700 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-700'
               }`}
             >
