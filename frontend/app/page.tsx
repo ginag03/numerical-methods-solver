@@ -80,10 +80,30 @@ export default function Home() {
   const [gamma, setGamma] = useState("");
 
   const [customFormula, setCustomFormula] = useState("");
+  
   const applyPreset = (preset: OdePreset) => {
     setCustomFormula(preset.formula);
     setY0String(preset.y0);
     setTMax(preset.tMax);
+  }
+
+  const handleEquationChange = (newEquation: Equation) => {
+    setEquation(newEquation);
+
+    setY0String("");
+    setDt("");
+    setTMax("");
+    setK("");
+    setAlpha("");
+    setBeta("");
+    setDelta("");
+    setGamma("");
+    setCustomFormula("");
+
+    setMethod("euler");
+
+    setChartData(null);
+    setError(null);
   }
 
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -334,8 +354,7 @@ export default function Home() {
                 value={equation}
                 autoComplete="off"
                 onChange={(e) => {
-                  setEquation(e.target.value as Equation);
-                  setY0String("");
+                  handleEquationChange(e.target.value as Equation);
                 }}
               >
                 <option value="decay">Decay</option>
