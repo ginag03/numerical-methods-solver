@@ -48,7 +48,7 @@ uvicorn api:app --reload
 
 The backend will now be running on `http://127.0.0.1:8000`
 
-### 2. Frontend Setuo (Next.js)
+### 2. Frontend Setup (Next.js)
 
 Open a new terminal window, navigate to your frontend directory, and install the dependencies:
 ```bash
@@ -61,7 +61,7 @@ npm run dev
 
 ## Architecture Notes
 
-To prevent injection attacks from the custom equation input, the backend utilises Sympy's `parse_epr` with an explicitly emptied `global_dict`. This creates a strict mathematical whitelist (e.g., `sin`, `cos`, `t`, `y`), instantly crashing if malicious system commands are detected, before compiling the safe abstract syntax tree into a vectorised NumPy function using `lambdify`.
+To prevent injection attacks from the custom equation input, the backend utilises Sympy's `parse_epr` with an explicitly emptied `global_dict`. This creates a strict mathematical whitelist (e.g., `sin`, `cos`, `t`, `y`), instantly escaping if malicious system commands are detected, before compiling the safe abstract syntax tree into a vectorised NumPy function using `lambdify`.
 
 ## AI Transparency
 
